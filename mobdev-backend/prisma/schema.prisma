@@ -1,0 +1,130 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  username  String   @unique
+  password  String
+  role      Role
+  createdAt DateTime @default(now())
+
+  products      Product[]
+  suppliers     Supplier[]
+  categories    Category[]
+  transactions  StockTransaction[]
+  notifications Notification[]
+  activities    UserActivity[]
+}
+
+enum Role {
+  Admin
+  Manager
+  Staff
+}
+
+model Product {
+  id           Int      @id @default(autoincrement())
+  sku          String
+  name         String
+  category     String?
+  quantity     Int      @default(0)
+  unitPrice    Float    @default(0)
+  supplierName String?
+  expiryDate   String?
+  barcode      String?
+  minStock     Int      @default(5)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  categoryId  Int?
+  categoryRel Category? @relation("ProductCategory", fields: [categoryId], references: [id])
+
+  supplierId  Int?
+  supplierRel Supplier? @relation("ProductSupplier", fields: [supplierId], references: [id])
+
+  ownerUserId Int
+  owner       User @relation(fields: [ownerUserId], references: [id])
+
+  @@unique([sku, ownerUserId])
+  @@index([categoryId])
+  @@index([supplierId])
+}
+
+model StockTransaction {
+  id        Int      @id @default(autoincrement())
+  sku       String
+  change    Int
+  reason    String
+  userId    String?
+  createdAt DateTime @default(now())
+
+  ownerUserId Int
+  owner       User @relation(fields: [ownerUserId], references: [id])
+}
+
+model Notification {
+  id        Int      @id @default(autoincrement())
+  sku       String?
+  type      String
+  message   String
+  resolved  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  ownerUserId Int
+  owner       User @relation(fields: [ownerUserId], references: [id])
+
+  @@unique([sku, type, message, resolved, ownerUserId])
+}
+
+model Supplier {
+  id        Int      @id @default(autoincrement())
+  name      String
+  phone     String?
+  email     String?
+  address   String?
+  note      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  ownerUserId Int
+  owner       User @relation(fields: [ownerUserId], references: [id])
+  products    Product[] @relation("ProductSupplier")
+
+  @@unique([name, ownerUserId])
+  @@index([ownerUserId])
+}
+
+model Category {
+  id          Int      @id @default(autoincrement())
+  name        String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  ownerUserId Int
+  owner       User @relation(fields: [ownerUserId], references: [id])
+  products    Product[] @relation("ProductCategory")
+
+  @@unique([name, ownerUserId])
+  @@index([ownerUserId])
+}
+
+model UserActivity {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  action    String
+  path      String
+  method    String
+  status    Int
+  createdAt DateTime @default(now())
+  meta      Json?
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+}
