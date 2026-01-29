@@ -1,0 +1,45 @@
+{"level":"info","message":"✓ API listening on http://0.0.0.0:5000","service":"mobdev-api","timestamp":"2026-01-17 11:59:37"}
+{"level":"info","message":"✓ Initial alert check completed","service":"mobdev-api","timestamp":"2026-01-17 11:59:38"}
+{"level":"info","message":"✓ API listening on http://0.0.0.0:5000","service":"mobdev-api","timestamp":"2026-01-17 11:59:38"}
+{"level":"info","message":"✓ Initial alert check completed","service":"mobdev-api","timestamp":"2026-01-17 11:59:39"}
+{"ip":"192.168.0.21","level":"info","message":"[GET] /api/sync/download","service":"mobdev-api","timestamp":"2026-01-17 11:59:46"}
+{"ip":"192.168.0.21","level":"info","message":"[GET] /api/sync/download","service":"mobdev-api","timestamp":"2026-01-17 11:59:46"}
+{"ip":"192.168.0.21","level":"info","message":"[GET] /api/suppliers/delta","service":"mobdev-api","timestamp":"2026-01-17 11:59:47"}
+{"ip":"192.168.0.21","level":"info","message":"[GET] /api/sync/download","service":"mobdev-api","timestamp":"2026-01-17 11:59:48"}
+{"ip":"192.168.0.21","level":"info","message":"[GET] /api/sync/download","service":"mobdev-api","timestamp":"2026-01-17 12:00:18"}
+{"ip":"192.168.0.21","level":"info","message":"[GET] /api/suppliers/delta","service":"mobdev-api","timestamp":"2026-01-17 12:00:18"}
+{"ip":"192.168.0.21","level":"info","message":"[GET] /api/sync/download","service":"mobdev-api","timestamp":"2026-01-17 12:00:49"}
+{"level":"info","message":"✓ API listening on http://0.0.0.0:5000","service":"mobdev-api","timestamp":"2026-01-17 12:01:12"}
+{"level":"info","message":"✓ Initial alert check completed","service":"mobdev-api","timestamp":"2026-01-17 12:01:12"}
+{"level":"info","message":"✓ API listening on http://0.0.0.0:5000","service":"mobdev-api","timestamp":"2026-01-17 12:03:54"}
+{"level":"info","message":"✓ Initial alert check completed","service":"mobdev-api","timestamp":"2026-01-17 12:03:54"}
+{"ip":"127.0.0.1","level":"info","message":"[GET] /api-docs/","service":"mobdev-api","timestamp":"2026-01-17 12:04:10"}
+{"ip":"127.0.0.1","level":"info","message":"[GET] /api-docs/swagger-ui.css","service":"mobdev-api","timestamp":"2026-01-17 12:04:10"}
+{"ip":"127.0.0.1","level":"info","message":"[GET] /api-docs/swagger-ui-bundle.js","service":"mobdev-api","timestamp":"2026-01-17 12:04:10"}
+{"ip":"127.0.0.1","level":"info","message":"[GET] /api-docs/swagger-ui-standalone-preset.js","service":"mobdev-api","timestamp":"2026-01-17 12:04:10"}
+{"ip":"127.0.0.1","level":"info","message":"[GET] /api-docs/swagger-ui-init.js","service":"mobdev-api","timestamp":"2026-01-17 12:04:10"}
+{"ip":"192.168.0.21","level":"info","message":"[GET] /api/auth/me","service":"mobdev-api","timestamp":"2026-01-17 12:04:20"}
+{"level":"info","message":"✓ API listening on http://0.0.0.0:5000","service":"mobdev-api","timestamp":"2026-01-17 12:04:21"}
+{"level":"info","message":"✓ Initial alert check completed","service":"mobdev-api","timestamp":"2026-01-17 12:04:21"}
+{"level":"info","message":"✓ API listening on http://0.0.0.0:5000","service":"mobdev-api","timestamp":"2026-01-17 12:04:27"}
+{"level":"info","message":"✓ Initial alert check completed","service":"mobdev-api","timestamp":"2026-01-17 12:04:27"}
+{"level":"info","message":"✓ API listening on http://0.0.0.0:5000","service":"mobdev-api","timestamp":"2026-01-17 12:04:31"}
+{"level":"info","message":"✓ Initial alert check completed","service":"mobdev-api","timestamp":"2026-01-17 12:04:31"}
+{"ip":"192.168.0.21","level":"info","message":"[GET] /api/sync/download","service":"mobdev-api","timestamp":"2026-01-17 12:04:51"}
+{"ip":"192.168.0.21","level":"info","message":"[GET] /api/suppliers/delta","service":"mobdev-api","timestamp":"2026-01-17 12:04:51"}
+{"level":"info","message":"✓ API listening on http://0.0.0.0:5000","service":"mobdev-api","timestamp":"2026-01-17 12:04:56"}
+{"level":"info","message":"✓ Initial alert check completed","service":"mobdev-api","timestamp":"2026-01-17 12:04:57"}
+{"level":"info","message":"✓ API listening on http://0.0.0.0:5000","service":"mobdev-api","timestamp":"2026-01-17 12:05:01"}
+{"level":"info","message":"✓ Initial alert check completed","service":"mobdev-api","timestamp":"2026-01-17 12:05:02"}
+{"ip":"127.0.0.1","level":"info","message":"[GET] /api-docs/","service":"mobdev-api","timestamp":"2026-01-17 12:05:07"}
+{"ip":"127.0.0.1","level":"info","message":"[GET] /api-docs/swagger-ui.css","service":"mobdev-api","timestamp":"2026-01-17 12:05:07"}
+{"ip":"127.0.0.1","level":"info","message":"[GET] /api-docs/swagger-ui-bundle.js","service":"mobdev-api","timestamp":"2026-01-17 12:05:07"}
+{"ip":"127.0.0.1","level":"info","message":"[GET] /api-docs/swagger-ui-standalone-preset.js","service":"mobdev-api","timestamp":"2026-01-17 12:05:07"}
+{"ip":"127.0.0.1","level":"info","message":"[GET] /api-docs/swagger-ui-init.js","service":"mobdev-api","timestamp":"2026-01-17 12:05:07"}
+{"ip":"127.0.0.1","level":"info","message":"[GET] /api-docs/favicon-32x32.png","service":"mobdev-api","timestamp":"2026-01-17 12:05:08"}
+{"level":"info","message":"✓ API listening on http://0.0.0.0:5000","service":"mobdev-api","timestamp":"2026-01-17 12:05:10"}
+{"level":"info","message":"✓ Initial alert check completed","service":"mobdev-api","timestamp":"2026-01-17 12:05:10"}
+{"ip":"192.168.0.21","level":"info","message":"[GET] /api/sync/download","service":"mobdev-api","timestamp":"2026-01-17 12:05:21"}
+{"ip":"192.168.0.21","level":"info","message":"[GET] /api/suppliers/delta","service":"mobdev-api","timestamp":"2026-01-17 12:05:21"}
+{"level":"info","message":"✓ API listening on http://0.0.0.0:5000","service":"mobdev-api","timestamp":"2026-01-17 12:05:25"}
+{"level":"info","message":"✓ Initial alert check completed","service":"mobdev-api","timestamp":"2026-01-17 12:05:25"}

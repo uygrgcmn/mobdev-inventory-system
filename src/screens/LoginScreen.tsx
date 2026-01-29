@@ -1,6 +1,6 @@
 // src/screens/LoginScreen.tsx
 import React, { useState } from "react";
-import { StyleSheet, KeyboardAvoidingView, Platform, View, Text } from "react-native";
+import { StyleSheet, KeyboardAvoidingView, Platform, View, Text, Image } from "react-native";
 import { Appbar, TextInput, Button, Snackbar } from "react-native-paper";
 import { useAuth } from "../context/AuthContext";
 import { LinearGradient } from 'expo-linear-gradient';
@@ -16,13 +16,13 @@ export default function LoginScreen({ navigation }: any) {
   const handleLogin = async () => {
     try {
       if (!username.trim() || !password) {
-        setMsg("Kullanıcı adı ve şifre gerekli.");
+        setMsg("Username and password are required.");
         return;
       }
       setLoading(true);
       await signIn(username.trim(), password);
     } catch (e: any) {
-      setMsg(e?.message ?? "Giriş başarısız.");
+      setMsg(e?.message ?? "Login failed.");
     } finally {
       setLoading(false);
     }
@@ -48,15 +48,19 @@ export default function LoginScreen({ navigation }: any) {
             <View style={styles.card}>
               <View style={styles.logoContainer}>
                 <View style={styles.logoCircle}>
-                  <Text style={styles.logoText}>MD</Text>
+                  <Image
+                    source={require("../../assets/mobdev.png")}
+                    style={{ width: "100%", height: "100%", borderRadius: 40 }}
+                    resizeMode="cover"
+                  />
                 </View>
-                <Text style={styles.welcomeText}>Hoş Geldiniz</Text>
-                <Text style={styles.subtitleText}>Stok takip sisteminize giriş yapın</Text>
+                <Text style={styles.welcomeText}>Welcome!</Text>
+                <Text style={styles.subtitleText}>Sign in to your inventory system</Text>
               </View>
 
               <View style={styles.form}>
                 <TextInput
-                  label="Kullanıcı Adı"
+                  label="Username"
                   value={username}
                   onChangeText={setUsername}
                   mode="outlined"
@@ -70,7 +74,7 @@ export default function LoginScreen({ navigation }: any) {
                 />
 
                 <TextInput
-                  label="Şifre"
+                  label="Password"
                   value={password}
                   onChangeText={setPassword}
                   mode="outlined"
@@ -98,12 +102,12 @@ export default function LoginScreen({ navigation }: any) {
                   loading={loading}
                   disabled={loading}
                 >
-                  Giriş Yap
+                  Login
                 </Button>
 
                 <View style={styles.divider}>
                   <View style={styles.dividerLine} />
-                  <Text style={styles.dividerText}>veya</Text>
+                  <Text style={styles.dividerText}>or</Text>
                   <View style={styles.dividerLine} />
                 </View>
 
@@ -115,7 +119,7 @@ export default function LoginScreen({ navigation }: any) {
                   onPress={() => navigation.navigate("Register")}
                   disabled={loading}
                 >
-                  Yeni Hesap Oluştur
+                  Create New Account
                 </Button>
               </View>
             </View>
@@ -140,8 +144,10 @@ const styles = StyleSheet.create({
     elevation: 0,
   },
   headerTitle: {
+
     fontWeight: 'bold',
-    fontSize: 20,
+    fontSize: 25,
+    color: 'rgba(255, 255, 255, 1)',
   },
   container: {
     flex: 1,
@@ -166,7 +172,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#667eea',
+    backgroundColor: 'transparent', // Changed from #667eea to hide background
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 16,

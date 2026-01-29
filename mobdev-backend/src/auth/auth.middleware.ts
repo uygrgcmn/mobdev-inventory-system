@@ -4,7 +4,7 @@ import { env } from "../env";
 import { prisma } from "../db";
 
 export type UserRole = "Admin" | "Manager" | "Staff";
-export type AuthedReq = Request & { user?: { id: number; role: UserRole } };
+export type AuthedReq = Request & { user?: { id: number; role: UserRole; organizationId: number } };
 
 function hasTimedOut(payload: any) {
   if (!payload?.iat) return false;
@@ -23,7 +23,9 @@ export function authRequired(req: AuthedReq, res: Response, next: NextFunction) 
     if (hasTimedOut(payload)) {
       return res.status(401).json({ ok: false, message: "Session timed out" });
     }
-    req.user = { id: payload.id, role: payload.role };
+    // Backward compatibility: if token relies on old schema, it might fail.
+    // Ideally we require organizationId. For dev reset, it should be fine.
+    req.user = { id: payload.id, role: payload.role, organizationId: payload.organizationId };
 
     res.on("finish", () => {
       if (!req.user) return;

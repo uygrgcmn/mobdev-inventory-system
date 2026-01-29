@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { ScrollView, View } from "react-native";
+import { ScrollView, View, KeyboardAvoidingView, Platform } from "react-native";
 import { Appbar, TextInput, Button, Snackbar, Text } from "react-native-paper";
 import { useAuth } from "../context/AuthContext";
 import { addProduct } from "../repositories/productRepo";
@@ -71,14 +71,14 @@ export default function AddProductScreen({ navigation }: any) {
   const isStaff = user?.role === "Staff";
 
   const validate = () => {
-    if (!user?.id) return "Geçersiz oturum. Lütfen tekrar giriş yapın.";
-    if (isStaff) return "Personel yeni ürün ekleyemez.";
-    if (!form.sku.trim() || !form.name.trim()) return "SKU ve Ürün Adı zorunludur.";
-    if (!form.category.trim()) return "Kategori zorunludur.";
-    if (!form.supplierName.trim()) return "Tedarikçi zorunludur.";
-    if (!form.expiryDate.trim()) return "Son Kullanım Tarihi zorunludur.";
+    if (!user?.id) return "Invalid session. Please login again.";
+    if (isStaff) return "Staff cannot add new products.";
+    if (!form.sku.trim() || !form.name.trim()) return "SKU and Product Name are required.";
+    if (!form.category.trim()) return "Category is required.";
+    if (!form.supplierName.trim()) return "Supplier is required.";
+    if (!form.expiryDate.trim()) return "Expiry Date is required.";
     if (form.expiryDate && !/^\d{4}-\d{2}-\d{2}$/.test(form.expiryDate.trim()))
-      return "Son Kullanım Tarihi 'YYYY-MM-DD' formatında olmalı.";
+      return "Expiry Date must be in 'YYYY-MM-DD' format.";
     return "";
   };
 
@@ -102,12 +102,12 @@ export default function AddProductScreen({ navigation }: any) {
         },
         user!.id
       );
-      setMsg("Ürün başarıyla kaydedildi");
+      setMsg("Product saved successfully");
       setForm(initialForm);
       setTimeout(() => navigation.navigate("Home", { refresh: Date.now() }), 500);
     } catch (e: any) {
       console.error("[ADD_PRODUCT][ERROR]", e);
-      setMsg(e?.message || "Kayıt başarısız.");
+      setMsg(e?.message || "Save failed.");
     } finally {
       setLoading(false);
     }
@@ -117,47 +117,49 @@ export default function AddProductScreen({ navigation }: any) {
     <>
       <Appbar.Header>
         <Appbar.BackAction onPress={() => navigation.goBack()} />
-        <Appbar.Content title="Yeni Ürün Ekle" />
+        <Appbar.Content title="Add New Product" />
         <Appbar.Action icon="truck" onPress={() => navigation.navigate("Suppliers")} />
         <Button compact icon="barcode-scan" onPress={() => navigation.navigate("Scanner", { mode: "fillBarcode" })}>
-          Barkod Tara
+          Scan Barcode
         </Button>
       </Appbar.Header>
 
-      <ScrollView contentContainerStyle={{ padding: 12 }}>
-        {isStaff ? (
-          <View style={{ padding: 16 }}>
-            <Text variant="titleMedium">Personel yeni ürün ekleyemez.</Text>
-            <Text style={{ marginTop: 8 }}>Lütfen Admin/Manager hesabıyla giriş yapın.</Text>
-          </View>
-        ) : (
-          <View style={{ gap: 10 }}>
-            <TextInput label="SKU (Stok Kodu) *" value={form.sku} onChangeText={(t) => set("sku", t)} mode="outlined" autoCapitalize="characters" />
-            <TextInput label="Ürün Adı *" value={form.name} onChangeText={(t) => set("name", t)} mode="outlined" />
-            <TextInput label="Kategori *" value={form.category} onChangeText={(t) => set("category", t)} mode="outlined" />
-            <TextInput label="Miktar" value={form.quantity} onChangeText={(t) => set("quantity", t)} keyboardType="numeric" mode="outlined" />
-            <TextInput label="Birim Fiyat (₺)" value={form.unitPrice} onChangeText={(t) => set("unitPrice", t)} keyboardType="numeric" mode="outlined" />
-            <TextInput
-              label="Tedarikçi *"
-              value={form.supplierName}
-              onChangeText={(t) => set("supplierName", t)}
-              mode="outlined"
-              right={<TextInput.Icon icon="account-search" onPress={() => navigation.navigate("Suppliers", { pick: true, targetField: "supplierName" })} />}
-            />
-            <TextInput
-              label="Son Kullanım Tarihi (YYYY-MM-DD) *"
-              value={form.expiryDate}
-              onChangeText={(t) => set("expiryDate", t)}
-              mode="outlined"
-            />
-            <TextInput label="Barkod" value={form.barcode} onChangeText={(t) => set("barcode", t)} mode="outlined" />
-            <TextInput label="Minimum Stok" value={form.minStock} onChangeText={(t) => set("minStock", t)} keyboardType="numeric" mode="outlined" />
-            <Button mode="contained" onPress={handleSave} loading={loading} style={{ marginTop: 6 }}>
-              Kaydet
-            </Button>
-          </View>
-        )}
-      </ScrollView>
+      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1 }}>
+        <ScrollView contentContainerStyle={{ padding: 12 }}>
+          {isStaff ? (
+            <View style={{ padding: 16 }}>
+              <Text variant="titleMedium">Staff cannot add new products.</Text>
+              <Text style={{ marginTop: 8 }}>Please login with an Admin/Manager account.</Text>
+            </View>
+          ) : (
+            <View style={{ gap: 10 }}>
+              <TextInput label="SKU (Stock Code) *" value={form.sku} onChangeText={(t) => set("sku", t)} mode="outlined" autoCapitalize="characters" />
+              <TextInput label="Product Name *" value={form.name} onChangeText={(t) => set("name", t)} mode="outlined" />
+              <TextInput label="Category *" value={form.category} onChangeText={(t) => set("category", t)} mode="outlined" />
+              <TextInput label="Quantity" value={form.quantity} onChangeText={(t) => set("quantity", t)} keyboardType="numeric" mode="outlined" />
+              <TextInput label="Unit Price (₺)" value={form.unitPrice} onChangeText={(t) => set("unitPrice", t)} keyboardType="numeric" mode="outlined" />
+              <TextInput
+                label="Supplier *"
+                value={form.supplierName}
+                onChangeText={(t) => set("supplierName", t)}
+                mode="outlined"
+                right={<TextInput.Icon icon="account-search" onPress={() => navigation.navigate("Suppliers", { pick: true, targetField: "supplierName" })} />}
+              />
+              <TextInput
+                label="Expiry Date (YYYY-MM-DD) *"
+                value={form.expiryDate}
+                onChangeText={(t) => set("expiryDate", t)}
+                mode="outlined"
+              />
+              <TextInput label="Barcode" value={form.barcode} onChangeText={(t) => set("barcode", t)} mode="outlined" />
+              <TextInput label="Minimum Stock" value={form.minStock} onChangeText={(t) => set("minStock", t)} keyboardType="numeric" mode="outlined" />
+              <Button mode="contained" onPress={handleSave} loading={loading} style={{ marginTop: 6 }}>
+                Save
+              </Button>
+            </View>
+          )}
+        </ScrollView>
+      </KeyboardAvoidingView>
 
       <Snackbar visible={!!msg} onDismiss={() => setMsg("")} duration={2600}>
         {msg}

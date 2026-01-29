@@ -7,19 +7,34 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
+model Organization {
   id        Int      @id @default(autoincrement())
-  username  String   @unique
-  password  String
-  role      Role
+  name      String
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
+  users         User[]
   products      Product[]
   suppliers     Supplier[]
   categories    Category[]
   transactions  StockTransaction[]
   notifications Notification[]
+}
+
+model User {
+  id             Int      @id @default(autoincrement())
+  username       String   @unique
+  password       String
+  role           Role
+  organizationId Int
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  createdAt      DateTime @default(now())
+
+  // User-specific activity logging (audit trail)
   activities    UserActivity[]
+  
+  // Relations for tracking WHO did what (audit), but ownership belongs to Organization
+  transactions  StockTransaction[] // Transactions performed by this user
 }
 
 enum Role {
@@ -48,12 +63,15 @@ model Product {
   supplierId  Int?
   supplierRel Supplier? @relation("ProductSupplier", fields: [supplierId], references: [id])
 
-  ownerUserId Int
-  owner       User @relation(fields: [ownerUserId], references: [id])
+  organizationId Int
+  organization   Organization @relation(fields: [organizationId], references: [id])
 
-  @@unique([sku, ownerUserId])
+  ownerUserId Int? // Added to track creator
+
+  @@unique([sku, organizationId])
   @@index([categoryId])
   @@index([supplierId])
+  @@index([organizationId])
 }
 
 model StockTransaction {
@@ -61,11 +79,20 @@ model StockTransaction {
   sku       String
   change    Int
   reason    String
-  userId    String?
   createdAt DateTime @default(now())
 
-  ownerUserId Int
-  owner       User @relation(fields: [ownerUserId], references: [id])
+  // Who performed the action
+  userId    Int?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  // Which organization owns this data
+  organizationId Int
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  
+  ownerUserId Int?
+
+  @@index([organizationId])
+  @@index([userId])
 }
 
 model Notification {
@@ -76,10 +103,13 @@ model Notification {
   resolved  Boolean  @default(false)
   createdAt DateTime @default(now())
 
-  ownerUserId Int
-  owner       User @relation(fields: [ownerUserId], references: [id])
+  organizationId Int
+  organization   Organization @relation(fields: [organizationId], references: [id])
 
-  @@unique([sku, type, message, resolved, ownerUserId])
+  ownerUserId Int?
+
+  @@unique([sku, type, message, resolved, organizationId])
+  @@index([organizationId])
 }
 
 model Supplier {
@@ -92,12 +122,14 @@ model Supplier {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  ownerUserId Int
-  owner       User @relation(fields: [ownerUserId], references: [id])
-  products    Product[] @relation("ProductSupplier")
+  organizationId Int
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  products       Product[] @relation("ProductSupplier")
 
-  @@unique([name, ownerUserId])
-  @@index([ownerUserId])
+  ownerUserId Int?
+
+  @@unique([name, organizationId])
+  @@index([organizationId])
 }
 
 model Category {
@@ -106,12 +138,12 @@ model Category {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  ownerUserId Int
-  owner       User @relation(fields: [ownerUserId], references: [id])
-  products    Product[] @relation("ProductCategory")
+  organizationId Int
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  products       Product[] @relation("ProductCategory")
 
-  @@unique([name, ownerUserId])
-  @@index([ownerUserId])
+  @@unique([name, organizationId])
+  @@index([organizationId])
 }
 
 model UserActivity {
@@ -124,7 +156,7 @@ model UserActivity {
   createdAt DateTime @default(now())
   meta      Json?
 
-  user User @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
 }

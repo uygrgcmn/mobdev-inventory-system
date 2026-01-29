@@ -3,7 +3,7 @@ import * as SecureStore from "expo-secure-store";
 
 // Configurable API base (use EXPO_PUBLIC_API_URL in env; default emulator loopback)
 export const API_URL =
-  process.env.EXPO_PUBLIC_API_URL || "http://192.168.1.105:5000/api";
+  process.env.EXPO_PUBLIC_API_URL || "http://192.168.1.60:5000/api";
 
 export async function setToken(token: string) {
   await SecureStore.setItemAsync("token", token);
@@ -47,4 +47,8 @@ export async function apiFetch(path: string, options: RequestInit = {}) {
 
 export async function fetchMe() {
   return apiFetch("/auth/me");
+}
+
+export async function deleteNotification(id: number) {
+  return apiFetch(`/notifications/${id}`, { method: "DELETE" });
 }

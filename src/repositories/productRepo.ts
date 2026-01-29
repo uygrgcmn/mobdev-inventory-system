@@ -28,10 +28,10 @@ export async function addProduct(
   },
   ownerUserId: number
 ) {
-  // SKU çakışma kontrolü (aynı kullanıcı)
+  // SKU çakışma kontrolü (Organizasyon genelinde benzersiz olmalı, ama yerelde sadece SKU'ya bakmak yeterli çünkü yerel DB = Organizasyon DB)
   const dup = await runQuery<{ id: number }>(
-    `SELECT id FROM products WHERE sku = ? AND ownerUserId = ? LIMIT 1`,
-    [input.sku.trim(), ownerUserId]
+    `SELECT id FROM products WHERE sku = ? LIMIT 1`,
+    [input.sku.trim()]
   );
   if (dup.length > 0) {
     throw new Error("Bu SKU zaten mevcut. Lütfen farklı bir SKU girin.");
@@ -71,6 +71,7 @@ export async function updateProduct(
   },
   ownerUserId: number
 ) {
+  // Update herhangi bir kullanıcı tarafından yapılabilir (yetki varsa)
   await runExecute(
     `UPDATE products SET
        name = COALESCE(?, name),
@@ -82,7 +83,7 @@ export async function updateProduct(
        barcode = ?,
        minStock = COALESCE(?, minStock),
        updatedAt = datetime('now')
-     WHERE id = ? AND ownerUserId = ?`,
+     WHERE id = ?`,
     [
       patch.name?.trim() ?? null,
       nullIfEmpty(patch.category),
@@ -93,32 +94,33 @@ export async function updateProduct(
       nullIfEmpty(patch.barcode),
       patch.minStock !== undefined ? intOr(patch.minStock, 5) : null,
       id,
-      ownerUserId,
     ]
   );
 }
 
-/** Listele */
+/** Listele (Organization-wide: show all local products) */
 export async function listProducts(ownerUserId: number) {
-  return runQuery<any>(
-    `SELECT * FROM products WHERE ownerUserId = ? ORDER BY createdAt DESC`,
-    [ownerUserId]
+  // We ignore ownerUserId here because local DB contains only org data (cleared on logout)
+  const rows = await runQuery<any>(
+    `SELECT * FROM products ORDER BY createdAt DESC`
   );
+  console.log(`[REPO] listProducts returned ${rows.length} items`);
+  return rows;
 }
 
 /** Sil */
+/** Sil */
 export async function deleteProduct(id: number, ownerUserId: number) {
-  await runExecute(`DELETE FROM products WHERE id = ? AND ownerUserId = ?`, [
-    id,
-    ownerUserId,
-  ]);
+  // Allow deleting any product present locally (ACL controls access to this function)
+  await runExecute(`DELETE FROM products WHERE id = ?`, [id]);
 }
 
 /** Barkoda göre ürünü bul (aynı kullanıcı) */
+// Barkodla arama: Organizasyondaki HERHANGİ bir ürünü bulmalı (filtre yok)
 export async function findProductByBarcode(barcode: string, ownerUserId: number) {
   const rows = await runQuery<any>(
-    `SELECT * FROM products WHERE barcode = ? AND ownerUserId = ? LIMIT 1`,
-    [barcode, ownerUserId]
+    `SELECT * FROM products WHERE barcode = ? LIMIT 1`,
+    [barcode]
   );
   return rows[0] ?? null;
 }
@@ -130,17 +132,19 @@ export async function changeStockById(
   ownerUserId: number,
   reason = "scan-adjust"
 ) {
+  // Sadece ürün ID ile güncelle (Owner filtreleme)
   await runExecute(
     `UPDATE products
        SET quantity = quantity + ?, updatedAt = datetime('now')
-     WHERE id = ? AND ownerUserId = ?`,
-    [delta, productId, ownerUserId]
+     WHERE id = ?`,
+    [delta, productId]
   );
 
+  // Transaction kaydını oluşturan kişi (ownerUserId) şu anki kullanıcıdır
   await runExecute(
     `INSERT INTO stock_transactions (sku, change, reason, userId, createdAt, ownerUserId)
      SELECT sku, ?, ?, ?, datetime('now'), ?
-     FROM products WHERE id = ? AND ownerUserId = ?`,
-    [delta, reason, String(ownerUserId), ownerUserId, productId, ownerUserId]
+     FROM products WHERE id = ?`,
+    [delta, reason, String(ownerUserId), ownerUserId, productId]
   );
 }

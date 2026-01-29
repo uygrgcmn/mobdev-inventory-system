@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { FlatList, StyleSheet, View } from "react-native";
+import { FlatList, StyleSheet, View, ScrollView, KeyboardAvoidingView, Platform } from "react-native";
 import {
   Appbar,
   Card,
@@ -49,7 +49,7 @@ export default function SuppliersScreen({ navigation, route }: any) {
   const handleAdd = async () => {
     try {
       if (!name.trim()) {
-        setMsg("Tedarikçi adı zorunlu.");
+        setMsg("Supplier name is required.");
         return;
       }
       await ensureSuppliers();
@@ -61,16 +61,16 @@ export default function SuppliersScreen({ navigation, route }: any) {
       setAddress("");
       setNote("");
       await load();
-      setMsg("Tedarikçi eklendi.");
+      setMsg("Supplier added.");
     } catch (e: any) {
-      setMsg(e?.message ?? "Kayıt sırasında hata oluştu.");
+      setMsg(e?.message ?? "Error saving supplier.");
     }
   };
 
   const handleDelete = async (id: number) => {
     await deleteSupplier(id, user!.id);
     await load();
-    setMsg("Tedarikçi silindi.");
+    setMsg("Supplier deleted.");
   };
 
   const handlePick = (supplierName: string) => {
@@ -81,10 +81,10 @@ export default function SuppliersScreen({ navigation, route }: any) {
 
   const EmptyState = () => (
     <View style={styles.empty}>
-      <Text>Henüz tedarikçi yok.</Text>
+      <Text>No suppliers yet.</Text>
       {canWrite && (
         <Button style={{ marginTop: 8 }} mode="contained" onPress={() => setVisible(true)}>
-          Tedarikçi Ekle
+          Add Supplier
         </Button>
       )}
     </View>
@@ -94,7 +94,7 @@ export default function SuppliersScreen({ navigation, route }: any) {
     <>
       <Appbar.Header>
         <Appbar.BackAction onPress={() => navigation.goBack()} />
-        <Appbar.Content title={pickMode ? "Tedarikçi Seç" : "Tedarikçiler"} />
+        <Appbar.Content title={pickMode ? "Pick Supplier" : "Suppliers"} />
         {canWrite && <Appbar.Action icon="plus" onPress={() => setVisible(true)} />}
       </Appbar.Header>
 
@@ -112,10 +112,10 @@ export default function SuppliersScreen({ navigation, route }: any) {
                   <IconButton icon="delete" onPress={() => setConfirmDeleteId(item.id)} />
                 )}
               </View>
-              {item.phone ? <Text>Tel: {item.phone}</Text> : null}
-              {item.email ? <Text>E-posta: {item.email}</Text> : null}
-              {item.address ? <Text>Adres: {item.address}</Text> : null}
-              {item.note ? <Text>Not: {item.note}</Text> : null}
+              {item.phone ? <Text>Phone: {item.phone}</Text> : null}
+              {item.email ? <Text>Email: {item.email}</Text> : null}
+              {item.address ? <Text>Address: {item.address}</Text> : null}
+              {item.note ? <Text>Note: {item.note}</Text> : null}
             </Card.Content>
           </Card>
         )}
@@ -124,27 +124,31 @@ export default function SuppliersScreen({ navigation, route }: any) {
       <Portal>
         {/* Add Dialog */}
         <Dialog visible={visible} onDismiss={() => setVisible(false)}>
-          <Dialog.Title>Yeni Tedarikçi</Dialog.Title>
+          <Dialog.Title>New Supplier</Dialog.Title>
           <Dialog.Content>
-            <TextInput label="Ad *" value={name} onChangeText={setName} mode="outlined" style={styles.input} />
-            <TextInput label="Telefon" value={phone} onChangeText={setPhone} mode="outlined" style={styles.input} keyboardType="phone-pad" />
-            <TextInput label="E-posta" value={email} onChangeText={setEmail} mode="outlined" style={styles.input} keyboardType="email-address" />
-            <TextInput label="Adres" value={address} onChangeText={setAddress} mode="outlined" style={styles.input} />
-            <TextInput label="Not" value={note} onChangeText={setNote} mode="outlined" style={styles.input} />
+            <ScrollView nestedScrollEnabled={true} keyboardShouldPersistTaps="handled">
+              <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"}>
+                <TextInput label="Name *" value={name} onChangeText={setName} mode="outlined" style={styles.input} />
+                <TextInput label="Phone" value={phone} onChangeText={setPhone} mode="outlined" style={styles.input} keyboardType="phone-pad" />
+                <TextInput label="Email" value={email} onChangeText={setEmail} mode="outlined" style={styles.input} keyboardType="email-address" />
+                <TextInput label="Address" value={address} onChangeText={setAddress} mode="outlined" style={styles.input} />
+                <TextInput label="Note" value={note} onChangeText={setNote} mode="outlined" style={styles.input} />
+              </KeyboardAvoidingView>
+            </ScrollView>
           </Dialog.Content>
           <Dialog.Actions>
-            <Button onPress={() => setVisible(false)}>İptal</Button>
+            <Button onPress={() => setVisible(false)}>Cancel</Button>
             <Button onPress={handleAdd} disabled={!canWrite}>
-              Kaydet
+              Save
             </Button>
           </Dialog.Actions>
         </Dialog>
 
         {/* Delete confirm */}
         <Dialog visible={confirmDeleteId !== null} onDismiss={() => setConfirmDeleteId(null)}>
-          <Dialog.Title>Tedarikçi silinsin mi?</Dialog.Title>
+          <Dialog.Title>Delete supplier?</Dialog.Title>
           <Dialog.Actions>
-            <Button onPress={() => setConfirmDeleteId(null)}>Vazgeç</Button>
+            <Button onPress={() => setConfirmDeleteId(null)}>Cancel</Button>
             <Button
               mode="contained"
               onPress={async () => {

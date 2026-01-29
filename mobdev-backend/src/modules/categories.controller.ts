@@ -8,16 +8,16 @@ const categorySchema = z.object({
 });
 
 export async function listCategories(req: AuthedReq, res: Response) {
-  const uid = req.user!.id;
+  const orgId = req.user!.organizationId;
   const data = await prisma.category.findMany({
-    where: { ownerUserId: uid },
+    where: { organizationId: orgId },
     orderBy: { name: "asc" },
   });
   res.json({ ok: true, data });
 }
 
 export async function createCategory(req: AuthedReq, res: Response) {
-  const uid = req.user!.id;
+  const orgId = req.user!.organizationId;
   const parsed = categorySchema.safeParse(req.body);
   if (!parsed.success) {
     const msg = parsed.error.issues[0]?.message ?? "Invalid body";
@@ -26,9 +26,9 @@ export async function createCategory(req: AuthedReq, res: Response) {
   const { name } = parsed.data;
 
   const data = await prisma.category.upsert({
-    where: { name_ownerUserId: { name, ownerUserId: uid } },
+    where: { name_organizationId: { name, organizationId: orgId } },
     update: {},
-    create: { name, ownerUserId: uid },
+    create: { name, organizationId: orgId },
   });
 
   res.json({ ok: true, data });

@@ -3,34 +3,49 @@ export type Role = "Admin" | "Manager" | "Staff";
 export type Perm =
   | "products:read"
   | "products:write"
+  | "products:view_cost" // can see unitPrice/buying price
+  | "products:delete"
   | "suppliers:read"
   | "suppliers:write"
   | "users:manage"
-  | "reports:read"
-  | "sync:run";
+  | "reports:financial" // cost, valuation
+  | "reports:stock"     // movement, quantities
+  | "sync:run"
+  | "stock:update"
+  | "audit:view";       // view stock transaction history details
 
 const ACL: Record<Role, Perm[]> = {
   Admin: [
     "products:read",
     "products:write",
+    "products:view_cost",
+    "products:delete",
     "suppliers:read",
     "suppliers:write",
     "users:manage",
-    "reports:read",
+    "reports:financial",
+    "reports:stock",
     "sync:run",
+    "stock:update",
+    "audit:view",
   ],
   Manager: [
     "products:read",
     "products:write",
+    "products:view_cost",
     "suppliers:read",
     "suppliers:write",
-    "reports:read",
+    "reports:stock",
     "sync:run",
+    "stock:update",
+    "audit:view",
   ],
   Staff: [
     "products:read",
     "suppliers:read",
-    "reports:read",
+    "stock:update",
+    "sync:run",
+    // No reports, no cost view, no delete
   ],
 };
 

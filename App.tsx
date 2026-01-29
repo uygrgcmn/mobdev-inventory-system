@@ -2,7 +2,7 @@
 import * as React from "react";
 import { View } from "react-native";
 import { ActivityIndicator, MD2Colors } from "react-native-paper";
-
+import { useFonts } from 'expo-font';
 import AppNavigator from "./src/navigation/AppNavigator";
 import { AuthProvider, useAuth } from "./src/context/AuthContext";
 import { initDB } from "./src/db/db";
@@ -24,6 +24,11 @@ function Gate() {
 
 export default function App() {
   const [dbReady, setDbReady] = React.useState(false);
+
+  const [fontsLoaded] = useFonts({
+    'Montserrat-ExtraBold': require('./assets/Montserrat-ExtraBold.ttf'),
+
+  });
 
   React.useEffect(() => {
     let alive = true;
@@ -57,8 +62,7 @@ export default function App() {
     };
   }, [dbReady]);
 
-  if (!dbReady) {
-    // DB/migration beklenirken loader
+  if (!dbReady || !fontsLoaded) {
     return (
       <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
         <ActivityIndicator animating size="large" color={MD2Colors.blue500} />

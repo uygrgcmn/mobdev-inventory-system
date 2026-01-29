@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { View, StyleSheet, ScrollView } from "react-native";
+import { View, StyleSheet, ScrollView, KeyboardAvoidingView, Platform } from "react-native";
 import {
   Appbar,
   Text,
@@ -138,7 +138,8 @@ export default function StockOperationsScreen({ navigation }: any) {
         />
       </Appbar.Header>
 
-      <ScrollView style={styles.container}>
+      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1 }}>
+        <ScrollView style={styles.container}>
         <Card style={styles.card}>
           <Card.Content>
             <Text variant="titleMedium">Ürün Özeti</Text>
@@ -240,7 +241,8 @@ export default function StockOperationsScreen({ navigation }: any) {
             )}
           </Card.Content>
         </Card>
-      </ScrollView>
+        </ScrollView>
+      </KeyboardAvoidingView>
 
       <Snackbar visible={!!msg} onDismiss={() => setMsg("")} duration={2200}>
         {msg}

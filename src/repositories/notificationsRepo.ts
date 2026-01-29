@@ -3,7 +3,7 @@ import { runExecute, runQuery } from "../db/db";
 export type NotificationRow = {
   id: number;
   sku: string | null;
-  type: "LOW_STOCK" | "EXPIRY";
+  type: "LOW_STOCK" | "EXPIRY" | "EXPIRED";
   message: string;
   resolved: number; // 0|1
   createdAt: string;
@@ -12,7 +12,7 @@ export type NotificationRow = {
 
 export async function addNotification(
   sku: string | null,
-  type: "LOW_STOCK" | "EXPIRY",
+  type: "LOW_STOCK" | "EXPIRY" | "EXPIRED",
   message: string,
   ownerUserId: number
 ) {
@@ -33,4 +33,8 @@ export async function getActiveNotifications(ownerUserId: number): Promise<Notif
 
 export async function resolveNotification(id: number, ownerUserId: number) {
   await runExecute(`UPDATE notifications SET resolved = 1 WHERE id = ? AND ownerUserId = ?`, [id, ownerUserId]);
+}
+
+export async function deleteNotification(id: number, ownerUserId: number) {
+  await runExecute(`DELETE FROM notifications WHERE id = ? AND ownerUserId = ?`, [id, ownerUserId]);
 }

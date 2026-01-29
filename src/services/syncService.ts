@@ -15,18 +15,21 @@ async function setLastSync(iso: string) {
   await runExecute(`UPDATE sync_info SET lastSync = ? WHERE id = 1`, [iso]);
 }
 
-/* ------------------------------ ÜRÜNLER (PRODUCTS) ------------------------------ */
-
-/** Yerelde değişen ürünleri (ownerUserId filtresiyle) sunucuya yükle */
+/** Yerelde değişen ürünleri sunucuya yükle */
 export async function uploadChangesServer(ownerUserId: number) {
-  const since = await getLastSync();
+  // CLOCK SKEW FIX:
+  // Do NOT filter by 'since' (lastSync).
+  // LastSync comes from Server time. If Phone time is behind Server time,
+  // new records will look "older" than lastSync and be skipped.
+  // ALWAYS upload all local records. Since we wipe DB on logout,
+  // the volume is small (only session changes + viewed data).
 
+  // const since = await getLastSync(); 
+
+  // Defensive: Only upload items belonging to this user
   const params: any[] = [ownerUserId];
-  let where = `WHERE ownerUserId = ?`;
-  if (since) {
-    where += ` AND updatedAt > ?`;
-    params.push(since);
-  }
+  const where = `WHERE ownerUserId = ?`;
+  // if (since) { where += ... } <-- REMOVED
 
   const changed = await runQuery<any>(`SELECT * FROM products ${where}`, params);
   if (changed.length === 0) return;
@@ -37,6 +40,7 @@ export async function uploadChangesServer(ownerUserId: number) {
   });
 }
 
+
 /** Sunucudaki yeni/değişen ürünleri indir ve yerelde upsert et */
 export async function downloadChangesServer() {
   const since = await getLastSync();
@@ -45,55 +49,76 @@ export async function downloadChangesServer() {
   const items: any[] = res.data ?? [];
 
   for (const it of items) {
-    // sku+ownerUserId composite; last-updated-wins
-    await runExecute(
-      `INSERT INTO products
-        (id, sku, name, category, quantity, unitPrice, supplierName, expiryDate, barcode, minStock, createdAt, updatedAt, ownerUserId)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-       ON CONFLICT(sku, ownerUserId) DO UPDATE SET
-         name=excluded.name,
-         category=excluded.category,
-         quantity=excluded.quantity,
-         unitPrice=excluded.unitPrice,
-         supplierName=excluded.supplierName,
-         expiryDate=excluded.expiryDate,
-         barcode=excluded.barcode,
-         minStock=excluded.minStock,
-         createdAt=excluded.createdAt,
-         updatedAt=excluded.updatedAt,
-         ownerUserId=excluded.ownerUserId
-       WHERE excluded.updatedAt > products.updatedAt`,
-      [
-        it.id ?? null,
-        it.sku,
-        it.name,
-        it.category ?? null,
-        it.quantity ?? 0,
-        it.unitPrice ?? 0,
-        it.supplierName ?? null,
-        it.expiryDate ?? null,
-        it.barcode ?? null,
-        it.minStock ?? 5,
-        it.createdAt ?? new Date().toISOString(),
-        it.updatedAt ?? new Date().toISOString(),
-        it.ownerUserId,
-      ]
-    );
+    // Conflict Handling:
+    // If incoming product has barcode 'B' and id '2', but we have a DIFFERENT local product with barcode 'B' (e.g. id '100'),
+    // SQLite will throw UNIQUE constraint error on barcode.
+    // Solution: "Server Wins". If we find a barcode/sku collision on a DIFFERENT ID, delete the local one first.
+
+    if (it.barcode) {
+      await runExecute(
+        `DELETE FROM products WHERE barcode = ? AND ownerUserId = ? AND id != ?`,
+        [it.barcode, it.ownerUserId, it.id ?? -1]
+      );
+    }
+    if (it.sku) {
+      await runExecute(
+        `DELETE FROM products WHERE sku = ? AND ownerUserId = ? AND id != ?`,
+        [it.sku, it.ownerUserId, it.id ?? -1]
+      );
+    }
+
+    console.log(`[SYNC][CLIENT] Inserting product ${it.sku} (ID: ${it.id})...`);
+    try {
+      await runExecute(
+        `INSERT INTO products
+          (id, sku, name, category, quantity, unitPrice, supplierName, expiryDate, barcode, minStock, createdAt, updatedAt, ownerUserId)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         ON CONFLICT(id) DO UPDATE SET
+           name=excluded.name,
+           category=excluded.category,
+           quantity=excluded.quantity,
+           unitPrice=excluded.unitPrice,
+           supplierName=excluded.supplierName,
+           expiryDate=excluded.expiryDate,
+           barcode=excluded.barcode,
+           minStock=excluded.minStock,
+           createdAt=excluded.createdAt,
+           updatedAt=excluded.updatedAt,
+           ownerUserId=excluded.ownerUserId,
+           sku=excluded.sku 
+         WHERE excluded.updatedAt > products.updatedAt`,
+        [
+          it.id ?? null,
+          it.sku,
+          it.name,
+          it.category ?? null,
+          it.quantity ?? 0,
+          it.unitPrice ?? 0,
+          it.supplierName ?? null,
+          it.expiryDate ?? null,
+          it.barcode ?? null,
+          it.minStock ?? 5,
+          it.createdAt ?? new Date().toISOString(),
+          it.updatedAt ?? new Date().toISOString(),
+          it.ownerUserId,
+        ]
+      );
+      console.log(`[SYNC][CLIENT] Insert success.`);
+    } catch (e) {
+      console.error(`[SYNC][CLIENT] Insert failed for ${it.sku}:`, e);
+    }
   }
 }
 
 /* --------------------------- TEDARİKÇİLER (SUPPLIERS) --------------------------- */
 
 /** Yerelde değişen tedarikçileri sunucuya yükle (name+ownerUserId benzersiz) */
+/** Yerelde değişen tedarikçileri sunucuya yükle (name+ownerUserId benzersiz) */
 export async function uploadSuppliersServer(ownerUserId: number) {
-  const since = await getLastSync();
+  // CLOCK SKEW FIX: Always upload all suppliers.
 
   const params: any[] = [ownerUserId];
-  let where = `WHERE ownerUserId = ?`;
-  if (since) {
-    where += ` AND updatedAt > ?`;
-    params.push(since);
-  }
+  const where = `WHERE ownerUserId = ?`;
 
   const changed = await runQuery<any>(`SELECT * FROM suppliers ${where}`, params);
   if (changed.length === 0) return;
@@ -115,9 +140,10 @@ export async function downloadSuppliersServer() {
   for (const it of items) {
     await runExecute(
       `INSERT INTO suppliers
-        (name, phone, email, address, note, ownerUserId, createdAt, updatedAt)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-       ON CONFLICT(name, ownerUserId) DO UPDATE SET
+        (id, name, phone, email, address, note, ownerUserId, createdAt, updatedAt)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+       ON CONFLICT(id) DO UPDATE SET
+         name=excluded.name,
          phone=excluded.phone,
          email=excluded.email,
          address=excluded.address,
@@ -127,6 +153,7 @@ export async function downloadSuppliersServer() {
          updatedAt=excluded.updatedAt
        WHERE excluded.updatedAt > suppliers.updatedAt`,
       [
+        it.id,
         it.name,
         it.phone ?? null,
         it.email ?? null,

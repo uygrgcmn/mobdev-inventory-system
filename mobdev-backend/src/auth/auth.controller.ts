@@ -20,7 +20,8 @@ const passwordRule = z
 const registerSchema = z.object({
   username: z.string().min(3, "Username must be at least 3 chars"),
   password: passwordRule,
-  role: z.enum(["Admin", "Manager", "Staff"]),
+  // Role is always Admin for new registrations
+  organizationName: z.string().min(2, "Company name is required"),
 });
 
 const loginSchema = z.object({
@@ -30,7 +31,7 @@ const loginSchema = z.object({
 
 /* ------------------------------ Helpers ------------------------------ */
 
-function signToken(payload: { id: number; role: "Admin" | "Manager" | "Staff" }) {
+function signToken(payload: { id: number; role: "Admin" | "Manager" | "Staff"; organizationId: number }) {
   if (!env.JWT_SECRET) throw new Error("Missing JWT_SECRET");
   return jwt.sign(payload as jwt.JwtPayload, env.JWT_SECRET as jwt.Secret, {
     expiresIn: env.JWT_EXPIRES_IN as jwt.SignOptions["expiresIn"],
@@ -47,7 +48,7 @@ export async function register(req: Request, res: Response) {
       return res.status(400).json({ ok: false, message: msg });
     }
 
-    const { username, password, role } = parsed.data;
+    const { username, password, organizationName } = parsed.data;
 
     const exists = await prisma.user.findUnique({ where: { username } });
     if (exists) {
@@ -55,11 +56,30 @@ export async function register(req: Request, res: Response) {
     }
 
     const hash = await bcrypt.hash(password, 10);
-    const u = await prisma.user.create({ data: { username, password: hash, role } });
+
+    // Always create a new Organization for public registration
+    const org = await prisma.organization.create({
+      data: { name: organizationName }
+    });
+
+    const u = await prisma.user.create({
+      data: {
+        username,
+        password: hash,
+        role: "Admin", // Always Admin
+        organizationId: org.id,
+      },
+    });
 
     return res.json({
       ok: true,
-      data: { id: u.id, username: u.username, role: u.role },
+      data: {
+        id: u.id,
+        username: u.username,
+        role: u.role,
+        organizationId: u.organizationId,
+        organizationName: org.name
+      },
     });
   } catch (e: any) {
     console.error("REGISTER_ERROR:", e);
@@ -76,19 +96,28 @@ export async function login(req: Request, res: Response) {
 
     const { username, password } = parsed.data;
 
-    const u = await prisma.user.findUnique({ where: { username } });
+    const u = await prisma.user.findUnique({
+      where: { username },
+      include: { organization: true }
+    });
     if (!u) return res.status(401).json({ ok: false, message: "Invalid credentials" });
 
     const ok = await bcrypt.compare(password, u.password);
     if (!ok) return res.status(401).json({ ok: false, message: "Invalid credentials" });
 
-    const token = signToken({ id: u.id, role: u.role });
+    const token = signToken({ id: u.id, role: u.role, organizationId: u.organizationId });
 
     return res.json({
       ok: true,
       data: {
         token,
-        user: { id: u.id, username: u.username, role: u.role },
+        user: {
+          id: u.id,
+          username: u.username,
+          role: u.role,
+          organizationId: u.organizationId,
+          organizationName: (u as any).organization?.name // needs include in query
+        },
       },
     });
   } catch (e: any) {
@@ -103,11 +132,22 @@ export async function me(req: AuthedReq, res: Response) {
     const id = req.user!.id;
     const u = await prisma.user.findUnique({
       where: { id },
-      select: { id: true, username: true, role: true },
+      include: { organization: true },
     });
+    // @ts-ignore
+    const orgName = u.organization?.name;
     if (!u) return res.status(404).json({ ok: false, message: "User not found" });
 
-    return res.json({ ok: true, data: u });
+    return res.json({
+      ok: true,
+      data: {
+        id: u.id,
+        username: u.username,
+        role: u.role,
+        organizationId: u.organizationId,
+        organizationName: orgName
+      }
+    });
   } catch (e: any) {
     console.error("ME_ERROR:", e);
     return res.status(500).json({ ok: false, message: e?.message || "Failed to fetch user" });

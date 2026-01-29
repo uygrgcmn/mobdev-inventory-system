@@ -18,10 +18,10 @@ export async function addSupplier(
   const name = input.name?.trim() ?? "";
   if (!name) throw new Error("Tedarikçi adı zorunludur.");
 
-  // per-owner çakışma kontrolü
+  // Duplicate check (Local/Org wide)
   const dup = await runQuery<{ id: number }>(
-    `SELECT id FROM suppliers WHERE name = ? AND ownerUserId = ? LIMIT 1`,
-    [name, ownerUserId]
+    `SELECT id FROM suppliers WHERE name = ? LIMIT 1`,
+    [name]
   );
   if (dup.length > 0) {
     throw new Error("Bu tedarikçi zaten ekli.");
@@ -43,10 +43,10 @@ export async function addSupplier(
 }
 
 /** Tedarikçi listesi (aktif kullanıcı) */
+/** Tedarikçi listesi (Organization-wide: show all local suppliers) */
 export async function listSuppliers(ownerUserId: number) {
   return runQuery<any>(
-    `SELECT * FROM suppliers WHERE ownerUserId = ? ORDER BY name ASC`,
-    [ownerUserId]
+    `SELECT * FROM suppliers ORDER BY name ASC`
   );
 }
 
@@ -62,11 +62,11 @@ export async function updateSupplier(
   },
   ownerUserId: number
 ) {
-  // İsim değişiyorsa per-owner benzersizliğini koru
+  // İsim değişiyorsa per-owner değil GLOBAL (local) benzersizlik kontrolü
   if (patch.name && patch.name.trim()) {
     const dup = await runQuery<{ id: number }>(
-      `SELECT id FROM suppliers WHERE name = ? AND ownerUserId = ? AND id <> ? LIMIT 1`,
-      [patch.name.trim(), ownerUserId, id]
+      `SELECT id FROM suppliers WHERE name = ? AND id <> ? LIMIT 1`,
+      [patch.name.trim(), id]
     );
     if (dup.length > 0) throw new Error("Bu tedarikçi adı zaten kullanılıyor.");
   }
@@ -79,7 +79,7 @@ export async function updateSupplier(
        address = ?,
        note = ?,
        updatedAt = datetime('now')
-     WHERE id = ? AND ownerUserId = ?`,
+     WHERE id = ?`,
     [
       patch.name?.trim() ?? null,
       trimOrNull(patch.phone),
@@ -87,15 +87,15 @@ export async function updateSupplier(
       trimOrNull(patch.address),
       trimOrNull(patch.note),
       id,
-      ownerUserId,
     ]
   );
 }
 
 /** Tedarikçi sil */
+/** Tedarikçi sil */
 export async function deleteSupplier(id: number, ownerUserId: number) {
   await runExecute(
-    `DELETE FROM suppliers WHERE id = ? AND ownerUserId = ?`,
-    [id, ownerUserId]
+    `DELETE FROM suppliers WHERE id = ?`,
+    [id]
   );
 }

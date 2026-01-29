@@ -14,27 +14,14 @@ type ThemeCtx = {
   toggle: () => void;
 };
 
-const ThemeContext = createContext<ThemeCtx>({ mode: "light", toggle: () => {} });
+const ThemeContext = createContext<ThemeCtx>({ mode: "light", toggle: () => { } });
 
 const STORAGE_KEY = "@mobdev_theme";
 
-const lightTheme = {
-  ...PaperLight,
-  colors: {
-    ...PaperLight.colors,
-    primary: "#3B82F6", // Tailwind blue-500
-    secondary: "#22C55E", // green-500
-  },
-};
+import { AppLightTheme, AppDarkTheme } from "../constants/theme";
 
-const darkTheme = {
-  ...PaperDark,
-  colors: {
-    ...PaperDark.colors,
-    primary: "#60A5FA", // blue-400
-    secondary: "#4ADE80", // green-400
-  },
-};
+const lightTheme = AppLightTheme;
+const darkTheme = AppDarkTheme;
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [mode, setMode] = useState<Mode>("light");
@@ -50,7 +37,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const toggle = async () => {
     setMode((prev) => {
       const next: Mode = prev === "light" ? "dark" : "light";
-      AsyncStorage.setItem(STORAGE_KEY, next).catch(() => {});
+      AsyncStorage.setItem(STORAGE_KEY, next).catch(() => { });
       return next;
     });
   };

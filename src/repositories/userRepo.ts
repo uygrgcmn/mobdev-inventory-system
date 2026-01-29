@@ -1,40 +1,40 @@
-import { runExecute, runQuery } from "../db/db";
+import { apiFetch } from "../services/api";
+
+export type UserRole = "Admin" | "Manager" | "Staff";
 
 export type DbUser = {
   id: number;
   username: string;
-  role: string; // DB'de string saklıyoruz (CHECK ile kısıtlı)
+  role: UserRole;
+  confirmed?: boolean;
 };
 
-export async function registerUser(
-  username: string,
-  password: string,
-  role: "Admin" | "Manager" | "Staff"
-) {
-  await runExecute(
-    `INSERT INTO users (username, password, role) VALUES (?, ?, ?)`,
-    [username, password, role]
-  );
-}
+// Backend does login/register separately in auth.controller, 
+// but this repo manages the "User Management" part (Admin managing others).
 
-export async function loginUser(
+export async function createUser(
   username: string,
-  password: string
-): Promise<DbUser> {
-  const rows = await runQuery<DbUser>(
-    `SELECT id, username, role FROM users WHERE username = ? AND password = ? LIMIT 1`,
-    [username, password]
-  );
-  if (!rows[0]) {
-    throw new Error("Geçersiz kullanıcı adı/şifre");
-  }
-  return rows[0]; // role: string
+  role: UserRole,
+  password?: string
+) {
+  // POST /users requires Admin role
+  return apiFetch("/users", {
+    method: "POST",
+    body: JSON.stringify({ username, password: password || "123456", role }),
+  });
 }
 
 export async function listUsers(): Promise<DbUser[]> {
-  return runQuery<DbUser>(`SELECT id, username, role FROM users ORDER BY createdAt DESC`);
+  return apiFetch("/users");
 }
 
 export async function deleteUser(id: number) {
-  await runExecute(`DELETE FROM users WHERE id = ?`, [id]);
+  await apiFetch(`/users/${id}`, { method: "DELETE" });
+}
+
+export async function updateUser(id: number, data: Partial<DbUser> & { password?: string }) {
+  await apiFetch(`/users/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
 }

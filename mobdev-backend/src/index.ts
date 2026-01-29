@@ -6,8 +6,8 @@ import { register, login, me } from "./auth/auth.controller";
 import { authRequired, onlyAdmin, requireRole } from "./auth/auth.middleware";
 import { listProducts, createProduct, updateProduct, deleteProduct } from "./modules/products.controller";
 import { listSuppliers, createSupplier, deltaSuppliers, bulkUpsertSuppliers } from "./modules/suppliers.controller";
-import { listNotifications } from "./modules/notifications.controller";
-import { listStockTransactions } from "./modules/stocks.controller";
+import { listNotifications, deleteNotification } from "./modules/notifications.controller";
+import { listStockTransactions, createStockTransaction } from "./modules/stocks.controller";
 import { uploadChanges, downloadChanges } from "./modules/sync.controller";
 import { listCategories, createCategory } from "./modules/categories.controller";
 import { checkAlertsForAllUsers } from "./modules/alerts.service";
@@ -56,9 +56,11 @@ app.post("/api/suppliers/bulkUpsert", authRequired, requireRole("Admin", "Manage
 
 /* ------------- Notifications ------------- */
 app.get("/api/notifications", authRequired, listNotifications);
+app.delete("/api/notifications/:id", authRequired, deleteNotification);
 
 /* ----------- Stock Transactions ---------- */
 app.get("/api/stocks", authRequired, listStockTransactions);
+app.post("/api/stocks", authRequired, createStockTransaction);
 
 /* ----------------- Sync ------------------ */
 app.post("/api/sync/upload", authRequired, uploadChanges);

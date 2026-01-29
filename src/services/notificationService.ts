@@ -35,11 +35,22 @@ export async function checkInventoryAlerts(ownerUserId: number) {
   for (const item of expiryItems) {
     const expiry = new Date(item.expiryDate);
     const diffDays = Math.floor((expiry.getTime() - now.getTime()) / (1000 * 3600 * 24));
-    if (diffDays <= 30 && diffDays >= 0) {
+    
+    // Check if expired
+    if (diffDays < 0) {
+      await addNotification(
+        item.sku,
+        "EXPIRED",
+        `${item.name} (${item.sku}) son kullanma tarihi geçmiş: ${item.expiryDate}`,
+        ownerUserId
+      );
+    }
+    // Check if expiring within 30 days
+    else if (diffDays <= 30) {
       await addNotification(
         item.sku,
         "EXPIRY",
-        `${item.name} (${item.sku}) son kullanma tarihi ${item.expiryDate} (${diffDays} gun kaldi)`,
+        `${item.name} (${item.sku}) son kullanma tarihi ${item.expiryDate} (${diffDays} gün kaldı)`,
         ownerUserId
       );
     }

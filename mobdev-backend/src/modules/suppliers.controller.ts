@@ -12,16 +12,16 @@ const supplierSchema = z.object({
 });
 
 export async function listSuppliers(req: AuthedReq, res: Response) {
-  const uid = req.user!.id;
+  const orgId = req.user!.organizationId;
   const data = await prisma.supplier.findMany({
-    where: { ownerUserId: uid },
+    where: { organizationId: orgId },
     orderBy: { name: "asc" }
   });
   res.json({ ok: true, data });
 }
 
 export async function createSupplier(req: AuthedReq, res: Response) {
-  const uid = req.user!.id;
+  const orgId = req.user!.organizationId;
   const parsed = supplierSchema.safeParse(req.body);
   if (!parsed.success) {
     const msg = parsed.error.issues[0]?.message ?? "Invalid body";
@@ -30,7 +30,7 @@ export async function createSupplier(req: AuthedReq, res: Response) {
   const body = parsed.data;
   try {
     const data = await prisma.supplier.create({
-      data: { ...body, ownerUserId: uid }
+      data: { ...body, organizationId: orgId }
     });
     res.json({ ok: true, data });
   } catch (e: any) {
@@ -40,12 +40,12 @@ export async function createSupplier(req: AuthedReq, res: Response) {
 
 /** Delta: updatedAt > since olanları döndürür (yoksa hepsini) */
 export async function deltaSuppliers(req: AuthedReq, res: Response) {
-  const uid = req.user!.id;
+  const orgId = req.user!.organizationId;
   const since = req.query.since ? new Date(String(req.query.since)) : null;
 
   const data = await prisma.supplier.findMany({
     where: {
-      ownerUserId: uid,
+      organizationId: orgId,
       ...(since ? { updatedAt: { gt: since } } : {})
     },
     orderBy: { updatedAt: "asc" }
@@ -54,14 +54,14 @@ export async function deltaSuppliers(req: AuthedReq, res: Response) {
   res.json({ ok: true, data });
 }
 
-/** Mobilin gönderdiği listeyi (name+ownerUserId unique) upsert eder */
+/** Mobilin gönderdiği listeyi (name+organizationId unique) upsert eder */
 export async function bulkUpsertSuppliers(req: AuthedReq, res: Response) {
-  const uid = req.user!.id;
+  const orgId = req.user!.organizationId;
   const items = (req.body as any[]) ?? [];
 
   for (const it of items) {
     await prisma.supplier.upsert({
-      where: { name_ownerUserId: { name: it.name, ownerUserId: uid } },
+      where: { name_organizationId: { name: it.name, organizationId: orgId } },
       update: {
         phone: it.phone ?? null,
         email: it.email ?? null,
@@ -75,7 +75,7 @@ export async function bulkUpsertSuppliers(req: AuthedReq, res: Response) {
         email: it.email ?? null,
         address: it.address ?? null,
         note: it.note ?? null,
-        ownerUserId: uid,
+        organizationId: orgId,
       },
     });
   }
